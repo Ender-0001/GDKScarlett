@@ -1,0 +1,19 @@
+﻿<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+  </Configurations>
+  <Folder Name="/Common/">
+    <Project Path="Common/Common.vcxitems" Id="8d1c7388-562d-40e5-b061-bf30e502438a" />
+  </Folder>
+  <Folder Name="/Libraries/">
+    <Project Path="Libraries/d3d12_x/d3d12_x.vcxproj" Id="b5275926-9e54-4b94-a136-1d486e7ca29c" />
+    <Project Path="Libraries/xmem/xmem.vcxproj" Id="c16f3acf-154e-414c-b728-e51f0f77fd49" />
+    <Project Path="Libraries/PIXEvt/PIXEvt.vcxproj" Id="d0e15d1e-aa3b-4d57-99e3-bcb8b7effe76" />
+    <Project Path="Libraries/AcpHal/AcpHal.vcxproj" Id="ea960d8b-353e-4c18-8958-aac0faeefb72" />
+    <Project Path="Libraries/mfplat/mfplat.vcxproj" Id="9993e9ae-4fc9-4928-a391-39e3f30983a9" />
+    <Project Path="Libraries/xgameruntime/xgameruntime.vcxproj" Id="b2349f2d-02ae-4df4-a93a-98fb470e3353" />
+  </Folder>
+  <Folder Name="/Tools/">
+    <Project Path="Tools/Bootstrapper/Bootstrapper.vcxproj" Id="a1b78e5b-f98b-4335-bda1-07806390b9ad" />
+  </Folder>
+</Solution>

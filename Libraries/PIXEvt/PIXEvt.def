@@ -1,0 +1,8 @@
+LIBRARY PIXEvt
+EXPORTS
+    PIXBeginCapture2
+    PIXEndCapture
+    PIXEventsReplaceBlock
+    PIXGetCaptureState
+    PIXRecordMemoryAllocationEvent
+    PIXRecordMemoryFreeEvent

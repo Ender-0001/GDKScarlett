@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <ProjectGuid>{b5275926-9e54-4b94-a136-1d486e7ca29c}</ProjectGuid>
+    <RootNamespace>d3d12_x</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="Shared">
+    <Import Project="..\..\Common\Common.vcxitems" Label="Shared" />
+  </ImportGroup>
+  <PropertyGroup>
+    <TargetName>gdks_d3d12_x</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <ModuleDefinitionFile>d3d12_x.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="DllMain.cpp" />
+    <ClCompile Include="XboxDevice.cpp" />
+    <ClCompile Include="XboxDxgiDevice.cpp" />
+    <ClCompile Include="XboxDescHeap.cpp" />
+    <ClCompile Include="XboxCmdQueue.cpp" />
+    <ClCompile Include="XboxCmdList.cpp" />
+    <ClCompile Include="Gcn\GcnDecoder.cpp" />
+    <ClCompile Include="Gcn\GcnHlsl.cpp" />
+    <ClCompile Include="Gcn\GcnHlslParse.cpp" />
+    <ClCompile Include="Gcn\GcnHlslEmit.cpp" />
+    <ClCompile Include="Gcn\GcnHlslTranslate.cpp" />
+    <ClCompile Include="DxbcUtil.cpp" />
+    <ClCompile Include="TranslatePipeline.cpp" />
+    <ClCompile Include="ShaderRecompiler.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Gcn\GcnDecoder.h" />
+    <ClInclude Include="Gcn\GcnHlsl.h" />
+    <ClInclude Include="Gcn\GcnHlslInternal.h" />
+    <ClInclude Include="DxbcUtil.h" />
+    <ClInclude Include="Guids.h" />
+    <ClInclude Include="TranslatePipeline.h" />
+    <ClInclude Include="XboxDeviceInternal.h" />
+    <ClInclude Include="ShaderHash.h" />
+    <ClInclude Include="ShaderRecompiler.h" />
+    <ClInclude Include="XboxDevice.h" />
+    <ClInclude Include="XboxDxgiDevice.h" />
+    <ClInclude Include="XboxDescHeap.h" />
+    <ClInclude Include="XboxCmdQueue.h" />
+    <ClInclude Include="XboxCmdList.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="d3d12_x.def" />
+  </ItemGroup>
+  <!-- Auto-deploy next to the game exe so a stale copy can never be tested.
+       Release ONLY: a Debug build links the debug CRT, whose per-alloc heap
+       checks make the runtime shader-recompiler path so slow the game looks
+       frozen (all-threads-waiting, one worker grinding in ucrtbased!check_bytes). -->
+  <Target Name="DeployToStage" AfterTargets="Build" Condition="'$(Configuration)'=='Release'">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(MSBuildProjectDirectory)\..\..\_stage" ContinueOnError="true" />
+    <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(MSBuildProjectDirectory)\..\..\_stage" ContinueOnError="true" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
+  </Target>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

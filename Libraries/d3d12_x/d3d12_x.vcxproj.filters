@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Gcn">
+      <UniqueIdentifier>{924D260F-0081-4A52-93F7-EDB3F1B897BC}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DllMain.cpp" />
+    <ClCompile Include="XboxDevice.cpp" />
+    <ClCompile Include="XboxDxgiDevice.cpp" />
+    <ClCompile Include="XboxDescHeap.cpp" />
+    <ClCompile Include="XboxCmdQueue.cpp" />
+    <ClCompile Include="XboxCmdList.cpp" />
+    <ClCompile Include="DxbcUtil.cpp" />
+    <ClCompile Include="TranslatePipeline.cpp" />
+    <ClCompile Include="ShaderRecompiler.cpp" />
+    <ClCompile Include="Gcn\GcnDecoder.cpp">
+      <Filter>Gcn</Filter>
+    </ClCompile>
+    <ClCompile Include="Gcn\GcnHlsl.cpp">
+      <Filter>Gcn</Filter>
+    </ClCompile>
+    <ClCompile Include="Gcn\GcnHlslParse.cpp">
+      <Filter>Gcn</Filter>
+    </ClCompile>
+    <ClCompile Include="Gcn\GcnHlslEmit.cpp">
+      <Filter>Gcn</Filter>
+    </ClCompile>
+    <ClCompile Include="Gcn\GcnHlslTranslate.cpp">
+      <Filter>Gcn</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DxbcUtil.h" />
+    <ClInclude Include="Guids.h" />
+    <ClInclude Include="ShaderHash.h" />
+    <ClInclude Include="ShaderRecompiler.h" />
+    <ClInclude Include="TranslatePipeline.h" />
+    <ClInclude Include="XboxDevice.h" />
+    <ClInclude Include="XboxDeviceInternal.h" />
+    <ClInclude Include="XboxDxgiDevice.h" />
+    <ClInclude Include="XboxDescHeap.h" />
+    <ClInclude Include="XboxCmdQueue.h" />
+    <ClInclude Include="XboxCmdList.h" />
+    <ClInclude Include="Gcn\GcnDecoder.h">
+      <Filter>Gcn</Filter>
+    </ClInclude>
+    <ClInclude Include="Gcn\GcnHlsl.h">
+      <Filter>Gcn</Filter>
+    </ClInclude>
+    <ClInclude Include="Gcn\GcnHlslInternal.h">
+      <Filter>Gcn</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="d3d12_x.def" />
+  </ItemGroup>
+</Project>

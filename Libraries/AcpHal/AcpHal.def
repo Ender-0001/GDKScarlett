@@ -1,0 +1,9 @@
+LIBRARY AcpHal
+EXPORTS
+    AcpHalCreate
+    ApuCreateHeap
+    ApuHeapGetState
+    AcpHalReleaseShapeContexts
+    ApuAlloc
+    AcpHalAllocateShapeContexts
+    ApuFree
