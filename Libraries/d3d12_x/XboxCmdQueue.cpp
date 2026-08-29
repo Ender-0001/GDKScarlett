@@ -171,9 +171,6 @@ struct Presenter
 	UINT height = 0;
 	DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
 
-	// Resetting one allocator per present while its previous submission is still
-	// in flight corrupts the commands it recorded, so a slot is only reset once
-	// the GPU has passed the fence value recorded when it was last submitted.
 	ID3D12CommandAllocator* ring[kRing] = {};
 	UINT64 ringFence[kRing] = {};
 	UINT current = 0;
@@ -186,9 +183,6 @@ struct Presenter
 static Presenter GPresenter;
 static SRWLOCK GPresentLock = SRWLOCK_INIT;
 
-// The game creates its own window, so adopt it rather than making a second one.
-// xmem's debug console is also a top-level visible window owned by this process,
-// so skip it explicitly and take the largest remaining client area.
 static BOOL CALLBACK FindGameWindow(HWND window, LPARAM parameter)
 {
 	DWORD pid = 0;
@@ -302,8 +296,6 @@ public:
 		return mReal->SetName(name);
 	}
 
-	// Hand back the device we were created from, so the game keeps seeing the
-	// Xbox-shaped device rather than the raw desktop one.
 	HRESULT STDMETHODCALLTYPE GetDevice(REFIID riid, void** ppv) override
 	{
 		if (mDevice && ppv)
@@ -400,7 +392,6 @@ public:
 		return S_OK;
 	}
 
-	// Signature is unverified, but plausibly (fence, value) like desktop Signal.
 	HRESULT STDMETHODCALLTYPE SignalX(void* fence, void* value, void*, void*) override
 	{
 		if (fence)
@@ -420,12 +411,8 @@ public:
 		return S_OK;
 	}
 
-	// Xbox passes the return buffer in the this slot and the object second; MSVC does the reverse.
 	D3D12_COMMAND_QUEUE_DESC* STDMETHODCALLTYPE GetDesc(IXboxCommandQueue* queue) override
 	{
-		static volatile LONG probed = 0;
-		if (InterlockedExchange(&probed, 1) == 0)
-			LOGF("queue GetDesc: this=%p param=%p", (void*)this, (void*)queue);
 		D3D12_COMMAND_QUEUE_DESC* out = (D3D12_COMMAND_QUEUE_DESC*)this;
 		*out = static_cast<XboxCommandQueue*>(queue)->mReal->GetDesc();
 		return out;
@@ -479,8 +466,6 @@ public:
 			GPresentSource = source;
 			NotePresentTarget(source);
 		}
-		// Only plane 0 / resource 0 is presented; anything on further planes is
-		// silently dropped, so make that visible.
 		{
 			UINT resourceCount = (planeCount && planes) ? planes[0].ResourceCount : 0;
 			static LONG loggedMultiPlane = 0;
@@ -505,20 +490,9 @@ public:
 		return S_OK;
 	}
 
-	// The token and flags only pace the Xbox frame pipeline; the desktop
-	// submission is the plain ExecuteCommandLists. This was a no-op stub once,
-	// which silently dropped whole frame submissions and parked every thread on
-	// waits for GPU work that never ran.
 	void STDMETHODCALLTYPE ExecuteCommandLists2X(UINT count, ID3D12CommandList* const* commandLists,
 	                                             UINT64 token, UINT flags) override
 	{
-		static LONG calls = 0;
-		LONG current = InterlockedIncrement(&calls);
-		if (current <= 4 || (current % 2000) == 0)
-		{
-			LOGF("ExecuteCommandLists2X: n=%u token=%llu flags=0x%X (forwarding, %ld total)",
-			     count, (unsigned long long)token, flags, current);
-		}
 		SubmitLists(count, commandLists);
 	}
 
@@ -544,8 +518,6 @@ private:
 			mReal->ExecuteCommandLists(numCommandLists, commandLists);
 			return;
 		}
-		// The game submits the wrapper objects we handed it from
-		// CreateCommandList/CreateCommandListX, so unwrap before executing.
 		ID3D12CommandList* stackLists[16];
 		ID3D12CommandList** lists = stackLists;
 		if (numCommandLists > ARRAYSIZE(stackLists))
@@ -561,14 +533,10 @@ private:
 		{
 			lists[i] = (ID3D12CommandList*)XboxCommandListUnwrap((ID3D12GraphicsCommandList*)commandLists[i]);
 		}
-		// Upload any queued game-VA texel data on this queue first, so it lands
-		// before the game's lists sample those textures.
 		GDKScarlett::D3D12X::FlushPlacedUploads(mReal);
 		mReal->ExecuteCommandLists(numCommandLists, lists);
 		GDKScarlett::D3D12X::DrainInfoQueue(mDevice, "ExecuteCommandLists");
 
-		// Poll periodically rather than only on a failed call: a wedged queue can
-		// go removed without any single call here returning a failure HRESULT.
 		static LONG calls = 0;
 		if ((InterlockedIncrement(&calls) % 60) == 0)
 		{
@@ -590,7 +558,6 @@ private:
 		}
 	}
 
-	// Xbox pages and D3D12 tiles are both 64 KB, so page index == tile index.
 	HRESULT ApplyPageMappings(D3D12_GPU_VIRTUAL_ADDRESS destinationAddress, UINT rangeCount,
 	                          const D3D12XBOX_PAGE_MAPPING_RANGE* ranges,
 	                          D3D12_GPU_VIRTUAL_ADDRESS poolAddress, UINT poolPages)
@@ -655,9 +622,6 @@ private:
 		return S_OK;
 	}
 
-	// On Xbox the display scan-out is driven by the D3D12.X driver itself, which
-	// is why the title imports no DXGI at all. On desktop we own that: create a
-	// swapchain against the window the game already made and copy into it.
 	bool EnsureSwapChain(ID3D12Resource* source)
 	{
 		if (GPresenter.swap)
@@ -678,10 +642,6 @@ private:
 			return false;
 		}
 		{
-			// Do NOT call GetWindowText here: it sends WM_GETTEXT synchronously to
-			// the window's owning GameThread, and PresentX runs on the RHI thread
-			// that the GameThread is routinely blocked waiting on. GetClassName and
-			// GetClientRect are served from kernel state and send no messages.
 			char className[64] = {};
 			GetClassNameA(window, className, sizeof(className));
 			RECT client = {};
@@ -696,8 +656,6 @@ private:
 			return false;
 		}
 
-		// Flip-model needs one of a small set of formats; match the source when we
-		// can so CopyResource is legal, otherwise fall back and skip the copy.
 		DXGI_FORMAT format = sourceDesc.Format;
 		if (format != DXGI_FORMAT_R8G8B8A8_UNORM && format != DXGI_FORMAT_B8G8R8A8_UNORM &&
 		    format != DXGI_FORMAT_R10G10B10A2_UNORM && format != DXGI_FORMAT_R16G16B16A16_FLOAT)
@@ -777,8 +735,6 @@ private:
 		bool copyable = source && backDesc.Format == sourceDesc.Format &&
 		                backDesc.Width == sourceDesc.Width && backDesc.Height == sourceDesc.Height;
 
-		// Rotate to the next allocator and wait until the GPU has finished the
-		// work recorded into it last time.
 		GPresenter.current = (GPresenter.current + 1) % Presenter::kRing;
 		GPresenter.allocator = GPresenter.ring[GPresenter.current];
 		if (GPresenter.fence && GPresenter.ringFence[GPresenter.current] &&
@@ -840,6 +796,5 @@ ID3D12CommandQueue* XboxCommandQueueWrap(ID3D12CommandQueue* real, ID3D12Device*
 		return nullptr;
 	}
 	XboxCommandQueue* wrapper = new XboxCommandQueue(real, device);
-	LOGF("XboxCommandQueueWrap: real %p -> wrapper %p", real, wrapper);
 	return (ID3D12CommandQueue*)wrapper;
 }

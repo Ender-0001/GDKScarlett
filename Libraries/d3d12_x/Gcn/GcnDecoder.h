@@ -1,5 +1,6 @@
 #pragma once
 
+#include <windows.h>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -58,6 +59,9 @@ namespace GDKScarlett::D3D12X
 
 	bool DecodeProgram(const uint32_t* words, size_t wordCount, Program& out, std::string& error,
 	                   uint64_t baseAddress = 0);
+
+	extern volatile LONG GScanAttempts;
+	extern volatile LONG64 GScanInstructions;
 
 	bool LocateProgram(const uint32_t* words, size_t wordCount,
 	                   size_t& startWord, Program& out, std::string& error);

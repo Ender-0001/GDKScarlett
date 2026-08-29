@@ -197,7 +197,7 @@ struct IXboxDevice
 	virtual HRESULT STDMETHODCALLTYPE GetDefaultMSAAParametersX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) = 0;
 	virtual HRESULT STDMETHODCALLTYPE CreateGraphicsPipelineStateX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) = 0;
 	virtual HRESULT STDMETHODCALLTYPE CreateSamplerX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) = 0;
-	virtual HRESULT STDMETHODCALLTYPE CreateComputePipelineStateX(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pBaseDesc, UINT NumExtendedDescs, const void* /*pExtendedDescs (D3D12XBOX_EXTENDED_COMPUTE_PIPELINE_STATE_DESC*, ignored)*/ a3, REFIID riid, void** ppPipelineState) = 0;
+	virtual HRESULT STDMETHODCALLTYPE CreateComputePipelineStateX(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pBaseDesc, UINT NumExtendedDescs, const void*  a3, REFIID riid, void** ppPipelineState) = 0;
 	virtual HRESULT STDMETHODCALLTYPE CreateDerivedComputePipelineStateX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) = 0;
 	virtual HRESULT STDMETHODCALLTYPE RegisterCustomFenceLocationX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) = 0;
 	virtual HRESULT STDMETHODCALLTYPE UnregisterCustomFenceLocationX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) = 0;
@@ -215,7 +215,7 @@ struct IXboxDevice
 	virtual HRESULT STDMETHODCALLTYPE CreateComponentPlacedResourceX1(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) = 0;
 	virtual HRESULT STDMETHODCALLTYPE SetFrameIntervalX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) = 0;
 	virtual HRESULT STDMETHODCALLTYPE ScheduleFrameEventX(UINT Type, UINT IntervalOffsetUs, FrameObjList* pList, UINT Flags, void* a5, void* a6) = 0;
-	virtual HRESULT STDMETHODCALLTYPE WaitFrameEventX(UINT Type, UINT TimeOutInMs, void* /*pAncillaryWaitList*/ a3, UINT Flags, UINT64* pToken) = 0;
+	virtual HRESULT STDMETHODCALLTYPE WaitFrameEventX(UINT Type, UINT TimeOutInMs, void*  a3, UINT Flags, UINT64* pToken) = 0;
 	virtual HRESULT STDMETHODCALLTYPE GetFrameStatisticsX(UINT64 Token, UINT TypeSet, UINT* pCount, BYTE* pStatistics, void* a5, void* a6) = 0;
 	virtual HRESULT STDMETHODCALLTYPE CreateCounterSetX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) = 0;
 	virtual HRESULT STDMETHODCALLTYPE CreateCommittedOpaqueResourceX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) = 0;
@@ -305,7 +305,7 @@ public:
 	HRESULT STDMETHODCALLTYPE GetDefaultMSAAParametersX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) override;
 	HRESULT STDMETHODCALLTYPE CreateGraphicsPipelineStateX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) override;
 	HRESULT STDMETHODCALLTYPE CreateSamplerX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) override;
-	HRESULT STDMETHODCALLTYPE CreateComputePipelineStateX(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pBaseDesc, UINT NumExtendedDescs, const void* /*pExtendedDescs (D3D12XBOX_EXTENDED_COMPUTE_PIPELINE_STATE_DESC*, ignored)*/ a3, REFIID riid, void** ppPipelineState) override;
+	HRESULT STDMETHODCALLTYPE CreateComputePipelineStateX(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pBaseDesc, UINT NumExtendedDescs, const void*  a3, REFIID riid, void** ppPipelineState) override;
 	HRESULT STDMETHODCALLTYPE CreateDerivedComputePipelineStateX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) override;
 	HRESULT STDMETHODCALLTYPE RegisterCustomFenceLocationX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) override;
 	HRESULT STDMETHODCALLTYPE UnregisterCustomFenceLocationX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) override;
@@ -323,7 +323,7 @@ public:
 	HRESULT STDMETHODCALLTYPE CreateComponentPlacedResourceX1(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) override;
 	HRESULT STDMETHODCALLTYPE SetFrameIntervalX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) override;
 	HRESULT STDMETHODCALLTYPE ScheduleFrameEventX(UINT Type, UINT IntervalOffsetUs, FrameObjList* pList, UINT Flags, void* a5, void* a6) override;
-	HRESULT STDMETHODCALLTYPE WaitFrameEventX(UINT Type, UINT TimeOutInMs, void* /*pAncillaryWaitList*/ a3, UINT Flags, UINT64* pToken) override;
+	HRESULT STDMETHODCALLTYPE WaitFrameEventX(UINT Type, UINT TimeOutInMs, void*  a3, UINT Flags, UINT64* pToken) override;
 	HRESULT STDMETHODCALLTYPE GetFrameStatisticsX(UINT64 Token, UINT TypeSet, UINT* pCount, BYTE* pStatistics, void* a5, void* a6) override;
 	HRESULT STDMETHODCALLTYPE CreateCounterSetX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) override;
 	HRESULT STDMETHODCALLTYPE CreateCommittedOpaqueResourceX(void* a1, void* a2, void* a3, void* a4, void* a5, void* a6) override;
@@ -500,6 +500,109 @@ static SRWLOCK GPsoKeyLock = SRWLOCK_INIT;
 static std::map<void*, std::vector<BYTE>> GPsoStreams;
 static SRWLOCK GPsoStreamLock = SRWLOCK_INIT;
 
+static volatile LONG64 GPsoCreateTicks = 0, GPsoCreateMaxTicks = 0;
+static volatile LONG GPsoCreateCalls = 0;
+static volatile LONG64 GPsoRewriteTicks = 0, GPsoRewriteMaxTicks = 0;
+static volatile LONG GPsoRewriteCalls = 0;
+
+static LONG64 NowTicks()
+{
+	LARGE_INTEGER t;
+	QueryPerformanceCounter(&t);
+	return t.QuadPart;
+}
+
+static double TicksToMs(LONG64 ticks)
+{
+	LARGE_INTEGER freq;
+	QueryPerformanceFrequency(&freq);
+	return freq.QuadPart ? (double)ticks * 1000.0 / (double)freq.QuadPart : 0.0;
+}
+
+static void NoteTicks(volatile LONG64* total, volatile LONG* calls, volatile LONG64* max, LONG64 delta)
+{
+	InterlockedAdd64(total, delta);
+	if (calls)
+	{
+		InterlockedIncrement(calls);
+	}
+	for (;;)
+	{
+		LONG64 seen = *max;
+		if (delta <= seen || InterlockedCompareExchange64(max, delta, seen) == seen)
+		{
+			break;
+		}
+	}
+}
+
+static volatile LONG GPsoAllCreates = 0;
+static volatile LONG64 GLastStatsTicks = 0;
+
+static void MaybeLogPsoStats()
+{
+	LONG n = InterlockedIncrement(&GPsoAllCreates);
+	LONG64 now = NowTicks();
+	LONG64 last = GLastStatsTicks;
+	bool due = (n % 25) == 0 || last == 0 || TicksToMs(now - last) >= 10000.0;
+	if (!due || InterlockedCompareExchange64(&GLastStatsTicks, now, last) != last)
+	{
+		return;
+	}
+
+	GDKScarlett::D3D12X::RecompilerTimings t{};
+	GDKScarlett::D3D12X::GetRecompilerTimings(&t);
+	LOGF("pso-stats: creates=%ld total=%ld cached=%ld placeholder=%ld blendForced=%ld "
+	     "| decode=%.0fms/%ld (memo %ld alias %ld) cacheIO=%.0fms/%ld fxc=%.0fms/%ld "
+	     "scan=%ld tries/%lld instrs",
+	     n, GPsoTotal, GPsoCached, GPsoPlaceholderCount, GPsoBlendForced,
+	     t.locateMs, t.locateCalls, t.locateMemoHits, t.aliasHits,
+	     t.cacheIoMs, t.cacheIoCalls, t.compileMs, t.compileCalls,
+	     t.scanAttempts, t.scanInstructions);
+	LOGF("pso-timing: driverPSO=%.0fms/%ld (max %.0fms) rewrite=%.0fms/%ld (max %.0fms) "
+	     "translate=%.0fms/%ld linkfix=%.0fms/%ld aliasIO=%.0fms/%ld",
+	     TicksToMs(GPsoCreateTicks), GPsoCreateCalls, TicksToMs(GPsoCreateMaxTicks),
+	     TicksToMs(GPsoRewriteTicks), GPsoRewriteCalls, TicksToMs(GPsoRewriteMaxTicks),
+	     t.translateMs, t.translateCalls, t.linkFixMs, t.linkFixCalls,
+	     t.aliasIoMs, t.aliasIoCalls);
+	LOGF("pso-timing: worst single op - decode=%.0fms translate=%.0fms fxc=%.0fms",
+	     t.maxLocateMs, t.maxTranslateMs, t.maxCompileMs);
+	GDKScarlett::D3D12X::LogRecompilerStats();
+}
+
+static HRESULT TimedCreatePipelineState(ID3D12Device2* device,
+                                        const D3D12_PIPELINE_STATE_STREAM_DESC* desc, REFIID riid,
+                                        void** ppPipelineState)
+{
+	LONG64 t0 = NowTicks();
+	HRESULT hr = device->CreatePipelineState(desc, riid, ppPipelineState);
+	NoteTicks(&GPsoCreateTicks, &GPsoCreateCalls, &GPsoCreateMaxTicks, NowTicks() - t0);
+	MaybeLogPsoStats();
+	return hr;
+}
+
+static HRESULT TimedCreateComputePipelineState(ID3D12Device* device,
+                                               const D3D12_COMPUTE_PIPELINE_STATE_DESC* desc,
+                                               REFIID riid, void** ppPipelineState)
+{
+	LONG64 t0 = NowTicks();
+	HRESULT hr = device->CreateComputePipelineState(desc, riid, ppPipelineState);
+	NoteTicks(&GPsoCreateTicks, &GPsoCreateCalls, &GPsoCreateMaxTicks, NowTicks() - t0);
+	MaybeLogPsoStats();
+	return hr;
+}
+
+static HRESULT TimedCreateGraphicsPipelineState(ID3D12Device* device,
+                                                const D3D12_GRAPHICS_PIPELINE_STATE_DESC* desc,
+                                                REFIID riid, void** ppPipelineState)
+{
+	LONG64 t0 = NowTicks();
+	HRESULT hr = device->CreateGraphicsPipelineState(desc, riid, ppPipelineState);
+	NoteTicks(&GPsoCreateTicks, &GPsoCreateCalls, &GPsoCreateMaxTicks, NowTicks() - t0);
+	MaybeLogPsoStats();
+	return hr;
+}
+
 static std::set<void*> GPsoPlaceholder;
 static const SIZE_T kDerivedDescStride = 332;
 
@@ -509,7 +612,6 @@ static void PurgeRecordsInRange(SIZE_T lo, SIZE_T hi);
 static void BufResName(void* res, char* out, size_t cap);
 static void InvalidateSrvRec(SIZE_T dst);
 static bool SrvRecAtHandle(SIZE_T stagingPtr, SrvRec* out);
-
 
 static void RecordUploadBuffer(ID3D12Resource* res)
 {
@@ -659,42 +761,6 @@ static void RecordDescCopy(SIZE_T dst, SIZE_T src)
 		else
 			GCbvBound.erase(dst);
 		ReleaseSRWLockExclusive(&GBoundLock);
-		if (have && rec.size >= 1024 && GDKScarlett::D3D12X::PresentedFrameCount() >= 240)
-		{
-			static LONG bigCopyCount = 0;
-			LONG c = InterlockedIncrement(&bigCopyCount);
-			if (c <= 32 || (c % 1000) == 0)
-			{
-				UINT64 slot = ~0ull;
-				void* heap = nullptr;
-				AcquireSRWLockShared(&GHeapLock);
-				for (auto& h : GCbvHeaps)
-				{
-					SIZE_T end = h.cpuBase + (SIZE_T)((UINT64)h.inc * h.num);
-					if (dst >= h.cpuBase && dst < end)
-					{
-						slot = (dst - h.cpuBase) / h.inc;
-						heap = h.heap;
-						break;
-					}
-				}
-				ReleaseSRWLockShared(&GHeapLock);
-			}
-		}
-	}
-	static LONG overflowCount = 0;
-	if (overflowCount < 8)
-	{
-		AcquireSRWLockShared(&GHeapLock);
-		for (auto& h : GCbvHeaps)
-		{
-			SIZE_T end = h.cpuBase + (SIZE_T)((UINT64)h.inc * h.num);
-			if (dst >= end && dst < end + (SIZE_T)((UINT64)h.inc * h.num))
-			{
-				break;
-			}
-		}
-		ReleaseSRWLockShared(&GHeapLock);
 	}
 }
 
@@ -771,7 +837,7 @@ void GDKScarlett::D3D12X::QueuePlacedUpload(void* resv)
 	PlacedRec rec{};
 	if (!PlacedForRes(res, &rec) || !rec.va)
 		return;
-	if (rec.dim != 3 /*TEXTURE2D*/)
+	if (rec.dim != 3 )
 		return;
 	{
 		D3D12_RESOURCE_DESC rd = res->GetDesc();
@@ -936,13 +1002,13 @@ static bool DetileToLinear(UINT64 va, UINT fmt, UINT w, UINT h, void* dst, UINT 
 	d.Format = fmt;
 	d.SampleDesc.Count = 1;
 	d.SampleDesc.Quality = 0;
-	d.Usage = 0 /*DEFAULT*/;
-	d.BindFlags = 0x8 /*SHADER_RESOURCE*/;
+	d.Usage = 0 ;
+	d.BindFlags = 0x8 ;
 	XGComputer* comp = nullptr;
 	bool ok = false;
 	__try
 	{
-		d.TileMode = xgTileMode(3 /*TEXTURE2D*/, fmt, w, h, 1, 1, 0x8 /*SHADER_RESOURCE*/, 0);
+		d.TileMode = xgTileMode(3 , fmt, w, h, 1, 1, 0x8 , 0);
 		if (FAILED(xgCreate(&d, &comp)) || !comp)
 			return false;
 		UINT64 srcSize = comp->vtbl->GetResourceSizeBytes(comp);
@@ -993,7 +1059,11 @@ void GDKScarlett::D3D12X::FlushPlacedUploads(ID3D12CommandQueue* queue)
 		releaseAll();
 		return;
 	}
-	dev->Release();
+	struct DevRelease
+	{
+		ID3D12Device* d;
+		~DevRelease() { d->Release(); }
+	} devRelease{dev};
 
 	static ID3D12CommandAllocator* allocator = nullptr;
 	static ID3D12GraphicsCommandList* commandList = nullptr;
@@ -1033,8 +1103,14 @@ void GDKScarlett::D3D12X::FlushPlacedUploads(ID3D12CommandQueue* queue)
 		if (WaitForSingleObject(fenceEvent, 2000) != WAIT_OBJECT_0)
 		{
 			static LONG stallCount = 0;
-			if (InterlockedIncrement(&stallCount) <= 12)
-				AcquireSRWLockExclusive(&GPendingLock);
+			LONG stalls = InterlockedIncrement(&stallCount);
+			if (stalls <= 12)
+			{
+				LOGF("FlushPlacedUploads: upload fence stalled >2s, requeueing %zu resource(s) "
+				     "(stall #%ld)",
+				     work.size(), stalls);
+			}
+			AcquireSRWLockExclusive(&GPendingLock);
 			GPlacedPending.insert(GPlacedPending.end(), work.begin(), work.end());
 			ReleaseSRWLockExclusive(&GPendingLock);
 			return;
@@ -1045,6 +1121,10 @@ void GDKScarlett::D3D12X::FlushPlacedUploads(ID3D12CommandQueue* queue)
 		if (r)
 			r->Release();
 	previousBatch.clear();
+	for (auto* r : keepAlive)
+		if (r)
+			r->Release();
+	keepAlive.clear();
 	if (FAILED(allocator->Reset()) || FAILED(commandList->Reset(allocator, nullptr)))
 	{
 		releaseAll();
@@ -1057,7 +1137,7 @@ void GDKScarlett::D3D12X::FlushPlacedUploads(ID3D12CommandQueue* queue)
 		PlacedRec rec{};
 		if (!PlacedForRes(res, &rec))
 			continue;
-		if (rec.dim == 1 /*BUFFER*/)
+		if (rec.dim == 1 )
 		{
 			MEMORY_BASIC_INFORMATION mbi{};
 			if (!VirtualQuery((LPCVOID)rec.va, &mbi, sizeof(mbi)) || mbi.State != MEM_COMMIT ||
@@ -1186,13 +1266,6 @@ void GDKScarlett::D3D12X::FlushPlacedUploads(ID3D12CommandQueue* queue)
 				if (off + n > srcBytes)
 					n = srcBytes - off;
 				memcpy(dst + fp.Offset + (SIZE_T)r * fp.Footprint.RowPitch, src + off, n);
-			}
-		}
-		{
-			static LONG dumpCount = 0;
-			if (blockBytes == 8 && InterlockedIncrement(&dumpCount) <= 3)
-			{
-				const uint16_t* w = (const uint16_t*)(dst + fp.Offset);
 			}
 		}
 		ub->Unmap(0, nullptr);
@@ -1362,80 +1435,12 @@ void GDKScarlett::D3D12X::ShadowCopyForBind(UINT64 gpuHandlePtr, UINT rootParam,
 		InterlockedIncrement(&noHeapMatchCount);
 		return;
 	}
-	if ((rootParam == 4 || rootParam == 1) && GDKScarlett::D3D12X::PresentedFrameCount() >= 240 &&
-	    heapInc)
-	{
-		static LONG p4Count = 0;
-		LONG pc = InterlockedIncrement(&p4Count);
-		if (pc <= 8 || (pc % 20000) == 0)
-		{
-			UINT64 baseSlot = ~0ull;
-			AcquireSRWLockShared(&GHeapLock);
-			for (auto& h : GCbvHeaps)
-			{
-				SIZE_T hend = h.cpuBase + (SIZE_T)((UINT64)h.inc * h.num);
-				if (cpuPtr >= h.cpuBase && cpuPtr < hend)
-				{
-					baseSlot = (cpuPtr - h.cpuBase) / h.inc;
-					break;
-				}
-			}
-			ReleaseSRWLockShared(&GHeapLock);
-			char l[300];
-			int k = 0;
-			for (UINT s = 0; s < 16 && k > 0 && k < (int)sizeof(l) - 8; ++s)
-			{
-				SIZE_T sc = cpuPtr + (SIZE_T)s * heapInc;
-				SIZE_T st = ResolveDescCopy(sc);
-				UINT sz = 0;
-				AcquireSRWLockShared(&GCbvLock);
-				{
-					auto it2 = GCbvRecs.find(st);
-					if (it2 == GCbvRecs.end())
-						it2 = GCbvRecs.find(sc);
-					if (it2 != GCbvRecs.end())
-						sz = it2->second.size;
-				}
-				ReleaseSRWLockShared(&GCbvLock);
-			}
-		}
-	}
 	SIZE_T stagingPtr = ResolveDescCopy(cpuPtr);
 	{
 		UINT sdim = 0, sfmt = 0;
 		void* sres = nullptr;
-		if (SrvAtHandle(stagingPtr, &sdim, &sfmt, &sres))
-		{
-			if (sres)
-				GDKScarlett::D3D12X::QueuePlacedUpload(
-				    sres);
-			static LONG sbCount = 0;
-			if (InterlockedIncrement(&sbCount) <= 16)
-			{
-				PlacedRec pr{};
-				bool placed = PlacedForRes(sres, &pr);
-				int readable = 0, nonzero = 0;
-				if (placed && pr.va)
-				{
-					MEMORY_BASIC_INFORMATION mbi{};
-					if (VirtualQuery((LPCVOID)pr.va, &mbi, sizeof(mbi)) &&
-					    mbi.State == MEM_COMMIT && !(mbi.Protect & (PAGE_NOACCESS | PAGE_GUARD)))
-					{
-						readable = 1;
-						const unsigned char* p = (const unsigned char*)pr.va;
-						SIZE_T avail =
-						    (SIZE_T)((const unsigned char*)mbi.BaseAddress + mbi.RegionSize - p);
-						SIZE_T n = avail < 16384 ? avail : 16384;
-						for (SIZE_T i = 0; i < n; ++i)
-							if (p[i])
-							{
-								nonzero = 1;
-								break;
-							}
-					}
-				}
-			}
-		}
+		if (SrvAtHandle(stagingPtr, &sdim, &sfmt, &sres) && sres)
+			GDKScarlett::D3D12X::QueuePlacedUpload(sres);
 	}
 	const UINT kTableDescriptors = 16;
 	size_t nRecs = 0, copied = 0;
@@ -1506,37 +1511,11 @@ void GDKScarlett::D3D12X::ShadowCopyForBind(UINT64 gpuHandlePtr, UINT rootParam,
 		{
 			if (rec.pending)
 				InterlockedExchange(rec.pending, 0);
+			uint8_t* p0 = CpuForVA(rec.sourceVA);
+			if (p0 && slot == 0)
 			{
-				uint8_t* p0 = CpuForVA(rec.sourceVA);
-				static LONG ppCount = 0;
-				if (p0 && InterlockedIncrement(&ppCount) <= 32)
-				{
-					const uint32_t* dw = (const uint32_t*)p0;
-				}
-				if (p0)
-				{
-					static LONG vhCount = 0;
-					UINT ndw = rec.size / 4;
-					for (UINT q = 0; q + 1 < ndw && vhCount < 48; ++q)
-					{
-						UINT64 v = *(const UINT64*)((const uint32_t*)p0 + q);
-						if (v < 0x10000)
-							continue;
-						UINT64 boff = 0;
-						void* bres = BufForGpuVA(v, &boff);
-						if (!bres)
-							continue;
-						InterlockedIncrement(&vhCount);
-						char nm2[128];
-						BufResName(bres, nm2, sizeof(nm2));
-						++q;
-					}
-				}
-				if (p0 && slot == 0)
-				{
-					memcpy(GCsParamStash, p0, rec.size < 80 ? rec.size : 80);
-					GCsParamSize = rec.size;
-				}
+				memcpy(GCsParamStash, p0, rec.size < 80 ? rec.size : 80);
+				GCsParamSize = rec.size;
 			}
 		}
 		bool owns = false;
@@ -1563,20 +1542,6 @@ void GDKScarlett::D3D12X::ShadowCopyForBind(UINT64 gpuHandlePtr, UINT rootParam,
 		if (bigRec)
 			InterlockedIncrement(&s_bCopied);
 		++copied;
-		static LONG callCount = 0;
-		if (InterlockedIncrement(&callCount) <= 12)
-		{
-			const float* f = (const float*)src;
-		}
-		if (rec.size >= 1024 && GDKScarlett::D3D12X::PresentedFrameCount() >= 240)
-		{
-			static LONG bigCount = 0;
-			LONG bc = InterlockedIncrement(&bigCount);
-			if (bc <= 24 || (bc % 500) == 0)
-			{
-				const float* f = (const float*)rec.shadowCpu;
-			}
-		}
 	}
 	static LONG bindTotal = 0, s_bindWithRecs = 0, s_slotsCopied = 0, s_bindNoCopy = 0;
 	InterlockedIncrement(&bindTotal);
@@ -1592,8 +1557,10 @@ void GDKScarlett::D3D12X::ShadowCopyForBind(UINT64 gpuHandlePtr, UINT rootParam,
 		AcquireSRWLockShared(&GBoundLock);
 		size_t nBound = GCbvBound.size();
 		ReleaseSRWLockShared(&GBoundLock);
-		LOGF("cbv-stats: binds=%ld withRecs=%ld slotsCopied=%ld noCopy=%ld bound=%zu retires=%ld",
-		     tot, s_bindWithRecs, s_slotsCopied, s_bindNoCopy, nBound, GShadowRetires);
+		LOGF("cbv-stats: binds=%ld withRecs=%ld slotsCopied=%ld noCopy=%ld bound=%zu retires=%ld "
+		     "| bigSeen=%ld bigCopied=%ld bigPend=%ld bigOwns=%ld bigSrc=%ld | creates=%ld decouple=%ld noHeap=%ld",
+		     tot, s_bindWithRecs, s_slotsCopied, s_bindNoCopy, nBound, GShadowRetires,
+		     seenBig, s_bCopied, s_bPend, s_bOwns, s_bSrc, GCbvCreates, GBindDecouples, noHeapMatchCount);
 	}
 }
 
@@ -1704,25 +1671,25 @@ HRESULT STDMETHODCALLTYPE XboxDevice::CreateGraphicsPipelineState(const D3D12_GR
 	{
 		const D3D12_RENDER_TARGET_BLEND_DESC& b = pDesc->BlendState.RenderTarget[0];
 	}
-	return real->CreateGraphicsPipelineState(pDesc, riid, ppPipelineState);
+	return TimedCreateGraphicsPipelineState(real, pDesc, riid, ppPipelineState);
 }
 
 static HRESULT CreateComputePSO(XboxDevice* device, const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc,
                                   REFIID riid, void** ppPipelineState)
 {
 	if (!pDesc)
-		return device->real->CreateComputePipelineState(pDesc, riid, ppPipelineState);
+		return TimedCreateComputePipelineState(device->real, pDesc, riid, ppPipelineState);
 	D3D12_COMPUTE_PIPELINE_STATE_DESC desc = *pDesc;
 	D3D12_SHADER_BYTECODE cs{};
 	if (desc.CS.pShaderBytecode)
 	{
-		if (GDKScarlett::D3D12X::TryRecompileToDxil(6 /*CS*/, false, &desc.CS, &cs))
+		if (GDKScarlett::D3D12X::TryRecompileToDxil(6 , false, &desc.CS, &cs))
 			desc.CS = cs;
 		else if (GDKScarlett::D3D12X::TryRecompileToDxil(6, false, &desc.CS, &cs,
-		                                                 /*allowCache=*/false))
+		                                                 false))
 			desc.CS = cs;
 	}
-	HRESULT hr = device->real->CreateComputePipelineState(&desc, riid, ppPipelineState);
+	HRESULT hr = TimedCreateComputePipelineState(device->real, &desc, riid, ppPipelineState);
 	{
 		const char* keys = GDKScarlett::D3D12X::PsoKeyCapture();
 		RegisterPsoKeys(*ppPipelineState, (keys && *keys) ? keys : " (cs-placeholder)");
@@ -1731,11 +1698,11 @@ static HRESULT CreateComputePSO(XboxDevice* device, const D3D12_COMPUTE_PIPELINE
 	{
 		D3D12_SHADER_BYTECODE ph{};
 		if (GDKScarlett::D3D12X::TryRecompileToDxil(6, false, &pDesc->CS, &ph,
-		                                            /*allowCache=*/false))
+		                                            false))
 		{
 			desc = *pDesc;
 			desc.CS = ph;
-			HRESULT hr2 = device->real->CreateComputePipelineState(&desc, riid, ppPipelineState);
+			HRESULT hr2 = TimedCreateComputePipelineState(device->real, &desc, riid, ppPipelineState);
 			if (SUCCEEDED(hr2))
 				hr = hr2;
 		}
@@ -1950,7 +1917,10 @@ void STDMETHODCALLTYPE XboxDevice::CreateConstantBufferView(const D3D12_CONSTANT
 			ReleaseSRWLockExclusive(&GBoundLock);
 			static LONG shCount = 0;
 			if (InterlockedIncrement(&shCount) <= 4)
-				return;
+			{
+				LOGF("cbv-shadow: registered (copy deferred to bind)");
+			}
+			return;
 		}
 	}
 
@@ -2031,14 +2001,6 @@ void STDMETHODCALLTYPE XboxDevice::CreateShaderResourceView(ID3D12Resource* pRes
 	AcquireSRWLockExclusive(&GSrvLock);
 	GSrvRecs[DestDescriptor.ptr] = rec;
 	ReleaseSRWLockExclusive(&GSrvLock);
-	static LONG srvCount = 0;
-	LONG n = InterlockedIncrement(&srvCount);
-	bool isTex = dim >= 2 && pResource != nullptr;
-	static LONG srvTexCount = 0;
-	if (n <= 16 || (isTex && InterlockedIncrement(&srvTexCount) <= 24))
-	{
-		UINT map = pDesc ? pDesc->Shader4ComponentMapping : 0xFFFFFFFF;
-	}
 }
 
 static void BufResName(void* res, char* out, size_t cap)
@@ -2349,26 +2311,18 @@ static void AllocationInfo(D3D12_RESOURCE_ALLOCATION_INFO* out, XboxDevice* devi
 		HeapFree(GetProcessHeap(), 0, descs);
 }
 
-// Xbox passes the return buffer in the this slot and the object second; MSVC does the reverse.
 D3D12_RESOURCE_ALLOCATION_INFO* STDMETHODCALLTYPE XboxDevice::GetResourceAllocationInfo(
     IXboxDevice* device, UINT visibleMask, UINT numResourceDescs,
     const D3D12_RESOURCE_DESC* pResourceDescs)
 {
-	static volatile LONG probed = 0;
-	if (InterlockedExchange(&probed, 1) == 0)
-		LOGF("GetResourceAllocationInfo: this=%p param=%p", (void*)this, (void*)device);
 	D3D12_RESOURCE_ALLOCATION_INFO* out = (D3D12_RESOURCE_ALLOCATION_INFO*)this;
 	AllocationInfo(out, static_cast<XboxDevice*>(device), visibleMask, numResourceDescs, pResourceDescs);
 	return out;
 }
 
-// Xbox passes the return buffer in the this slot and the object second; MSVC does the reverse.
 D3D12_HEAP_PROPERTIES* STDMETHODCALLTYPE XboxDevice::GetCustomHeapProperties(
     IXboxDevice* device, UINT nodeMask, D3D12_HEAP_TYPE heapType)
 {
-	static volatile LONG probed = 0;
-	if (InterlockedExchange(&probed, 1) == 0)
-		LOGF("GetCustomHeapProperties: this=%p param=%p", (void*)this, (void*)device);
 	D3D12_HEAP_PROPERTIES* out = (D3D12_HEAP_PROPERTIES*)this;
 	*out = static_cast<XboxDevice*>(device)->real->GetCustomHeapProperties(nodeMask, heapType);
 	return out;
@@ -2389,7 +2343,7 @@ HRESULT STDMETHODCALLTYPE XboxDevice::CreateCommittedResource(const D3D12_HEAP_P
 	if (FAILED(hr))
 	{
 		LOGF("CreateCommittedResource FAILED hr=0x%08X", (unsigned)hr);
-		if (hr == 0x887A0005 /* DXGI_ERROR_DEVICE_REMOVED */)
+		if (hr == 0x887A0005 )
 			GDKScarlett::D3D12X::ReportDeviceRemoved(real, "CreateCommittedResource");
 		DumpResourceDesc("  sanitized", pDesc ? &d : nullptr, pHeapProperties, (unsigned)hf,
 		                   (unsigned)st);
@@ -2483,37 +2437,7 @@ HRESULT STDMETHODCALLTYPE XboxDevice::CreateFence(UINT64 InitialValue,
 
 HRESULT STDMETHODCALLTYPE XboxDevice::GetDeviceRemovedReason()
 {
-	HRESULT r = real->GetDeviceRemovedReason();
-	if (FAILED(r))
-	{
-		static LONG onceFlag = 0;
-		if (InterlockedIncrement(&onceFlag) <= 3)
-		{
-			const char* name = "?";
-			switch ((unsigned)r)
-			{
-			case 0x887A0005:
-				name = "DEVICE_REMOVED";
-				break;
-			case 0x887A0006:
-				name = "DEVICE_HUNG (GPU fault/timeout)";
-				break;
-			case 0x887A0007:
-				name = "DEVICE_RESET";
-				break;
-			case 0x887A0020:
-				name = "DRIVER_INTERNAL_ERROR";
-				break;
-			case 0x887A0001:
-				name = "INVALID_CALL";
-				break;
-			case 0x8007000E:
-				name = "E_OUTOFMEMORY";
-				break;
-			}
-		}
-	}
-	return r;
+	return real->GetDeviceRemovedReason();
 }
 
 void STDMETHODCALLTYPE XboxDevice::GetCopyableFootprints(const D3D12_RESOURCE_DESC* pResourceDesc, UINT FirstSubresource,
@@ -2767,7 +2691,7 @@ HRESULT STDMETHODCALLTYPE XboxDevice::CreatePlacedResourceX(D3D12_GPU_VIRTUAL_AD
 	{
 		DumpResourceDesc("  sanitized", &d, &hp, 0, (unsigned)st);
 		DumpResourceDesc("  original ", pDesc, &hp, 0, (unsigned)InitialState);
-		if (hr == 0x887A0005 /* DXGI_ERROR_DEVICE_REMOVED */)
+		if (hr == 0x887A0005 )
 			GDKScarlett::D3D12X::ReportDeviceRemoved(real, "CreatePlacedResourceX");
 	}
 	return hr;
@@ -2846,7 +2770,7 @@ HRESULT STDMETHODCALLTYPE XboxDevice::CreateSamplerX(void*, void*, void*, void*,
 }
 
 HRESULT STDMETHODCALLTYPE XboxDevice::CreateComputePipelineStateX(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pBaseDesc, UINT NumExtendedDescs,
-    const void* /*pExtendedDescs (D3D12XBOX_EXTENDED_COMPUTE_PIPELINE_STATE_DESC*, ignored)*/,
+    const void* ,
     REFIID riid, void** ppPipelineState)
 {
 	return CreateComputePSO(this, pBaseDesc, riid, ppPipelineState);
@@ -2977,7 +2901,7 @@ HRESULT STDMETHODCALLTYPE XboxDevice::ScheduleFrameEventX(UINT Type,
 }
 
 HRESULT STDMETHODCALLTYPE XboxDevice::WaitFrameEventX(UINT Type, UINT TimeOutInMs,
-                                                    void* /*pAncillaryWaitList*/, UINT Flags,
+                                                    void* , UINT Flags,
                                                     UINT64* pToken)
 {
 	static volatile LONG64 nextToken = 0;
@@ -3264,6 +3188,16 @@ static SIZE_T RewritePsoStream(const void* in, SIZE_T inSize, BYTE* out, SIZE_T 
                                  bool allowCache = true, bool* rawXboxStage = nullptr,
                                  const D3D12_SHADER_BYTECODE* vsForce = nullptr)
 {
+	LONG64 rewriteStart = NowTicks();
+	struct RewriteTimer
+	{
+		LONG64 start;
+		~RewriteTimer()
+		{
+			NoteTicks(&GPsoRewriteTicks, &GPsoRewriteCalls, &GPsoRewriteMaxTicks,
+			          NowTicks() - start);
+		}
+	} rewriteTimer{ rewriteStart };
 	const BYTE* p = (const BYTE*)in;
 	const bool hasRenderTarget = ScanRenderTargetCount(in, inSize) > 0;
 	SIZE_T off = 0, w = 0;
@@ -3306,8 +3240,6 @@ static SIZE_T RewritePsoStream(const void* in, SIZE_T inSize, BYTE* out, SIZE_T 
 					*(UINT*)(rt + 28) = 1;
 					InterlockedIncrement(&GPsoBlendForced);
 					changed = true;
-					static LONG beCount = 0;
-					LONG c = InterlockedIncrement(&beCount);
 				}
 			}
 
@@ -3384,7 +3316,7 @@ HRESULT STDMETHODCALLTYPE XboxDevice::CreatePipelineState(const D3D12_PIPELINE_S
 				InterlockedIncrement(&GPsoPlaceholderCount);
 				n = RewritePsoStream(pDesc->pPipelineStateSubobjectStream, pDesc->SizeInBytes,
 				                       rebuilt, pDesc->SizeInBytes,
-				                       /*allowCache=*/false);
+				                       false);
 				phStream = true;
 			}
 			if (n)
@@ -3395,12 +3327,8 @@ HRESULT STDMETHODCALLTYPE XboxDevice::CreatePipelineState(const D3D12_PIPELINE_S
 		}
 	}
 
-	if ((GPsoTotal % 25) == 0)
-		LOGF("pso-stats: total=%ld cached=%ld placeholder=%ld blendForced=%ld", GPsoTotal,
-		     GPsoCached, GPsoPlaceholderCount, GPsoBlendForced);
-
 	const UINT64 iqMark = GDKScarlett::D3D12X::MarkInfoQueue(real);
-	HRESULT hr = d2->CreatePipelineState(&desc, riid, ppPipelineState);
+	HRESULT hr = TimedCreatePipelineState(d2, &desc, riid, ppPipelineState);
 
 	auto minimizeStream = [](BYTE* s, SIZE_T n) -> SIZE_T
 	{
@@ -3461,16 +3389,14 @@ HRESULT STDMETHODCALLTYPE XboxDevice::CreatePipelineState(const D3D12_PIPELINE_S
 				{
 					SIZE_T nl = RewritePsoStream(pDesc->pPipelineStateSubobjectStream,
 					                               pDesc->SizeInBytes, lf, pDesc->SizeInBytes,
-					                               /*allowCache=*/true, nullptr, &fixedVs);
+					                               true, nullptr, &fixedVs);
 					if (nl)
 					{
 						D3D12_PIPELINE_STATE_STREAM_DESC dl = *pDesc;
 						dl.pPipelineStateSubobjectStream = lf;
 						dl.SizeInBytes = nl;
 						const UINT64 lfMark = GDKScarlett::D3D12X::MarkInfoQueue(real);
-						HRESULT hrl = d2->CreatePipelineState(&dl, riid, ppPipelineState);
-						static LONG lfCount = 0;
-						LONG c = InterlockedIncrement(&lfCount);
+						HRESULT hrl = TimedCreatePipelineState(d2, &dl, riid, ppPipelineState);
 						if (SUCCEEDED(hrl))
 						{
 							if (ppPipelineState && *ppPipelineState)
@@ -3498,13 +3424,13 @@ HRESULT STDMETHODCALLTYPE XboxDevice::CreatePipelineState(const D3D12_PIPELINE_S
 			{
 				SIZE_T n2 = RewritePsoStream(pDesc->pPipelineStateSubobjectStream,
 				                               pDesc->SizeInBytes, fallback, pDesc->SizeInBytes,
-				                               /*allowCache=*/false);
+				                               false);
 				if (n2)
 				{
 					D3D12_PIPELINE_STATE_STREAM_DESC d3 = *pDesc;
 					d3.pPipelineStateSubobjectStream = fallback;
 					d3.SizeInBytes = n2;
-					HRESULT hr2 = d2->CreatePipelineState(&d3, riid, ppPipelineState);
+					HRESULT hr2 = TimedCreatePipelineState(d2, &d3, riid, ppPipelineState);
 					phStream = true;
 					if (SUCCEEDED(hr2))
 					{
@@ -3522,9 +3448,7 @@ HRESULT STDMETHODCALLTYPE XboxDevice::CreatePipelineState(const D3D12_PIPELINE_S
 						D3D12_PIPELINE_STATE_STREAM_DESC d4 = *pDesc;
 						d4.pPipelineStateSubobjectStream = fallback;
 						d4.SizeInBytes = n3;
-						HRESULT hr3 = d2->CreatePipelineState(&d4, riid, ppPipelineState);
-						static LONG lsCount = 0;
-						LONG c = InterlockedIncrement(&lsCount);
+						HRESULT hr3 = TimedCreatePipelineState(d2, &d4, riid, ppPipelineState);
 						if (SUCCEEDED(hr3))
 						{
 							if (ppPipelineState && *ppPipelineState)
@@ -3562,8 +3486,6 @@ HRESULT STDMETHODCALLTYPE XboxDevice::CreatePipelineState(const D3D12_PIPELINE_S
 				    (const BYTE*)desc.pPipelineStateSubobjectStream + desc.SizeInBytes);
 			ReleaseSRWLockExclusive(&GPsoStreamLock);
 		}
-		static LONG successCount = 0;
-		LONG total = InterlockedIncrement(&successCount);
 	}
 	else
 	{
@@ -3723,7 +3645,7 @@ HRESULT STDMETHODCALLTYPE XboxDevice::CreateDerivedGraphicsPipelineStateX(ID3D12
 		if (d2)
 		{
 			D3D12_PIPELINE_STATE_STREAM_DESC d = {stream.size(), stream.data()};
-			HRESULT hr = d2->CreatePipelineState(&d, riid, ppDerivedPipelineState);
+			HRESULT hr = TimedCreatePipelineState(d2, &d, riid, ppDerivedPipelineState);
 			d2->Release();
 			if (SUCCEEDED(hr) && *ppDerivedPipelineState)
 			{

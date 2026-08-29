@@ -32,7 +32,7 @@ static const void* GHeapVtable = nullptr;
 struct XboxDescriptorHeap final : IXboxDescriptorHeap
 {
 	ID3D12DescriptorHeap* real;
-	ID3D12Device* device;   // for GetDevice
+	ID3D12Device* device;
 	volatile LONG refs;
 
 	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override
@@ -61,9 +61,6 @@ struct XboxDescriptorHeap final : IXboxDescriptorHeap
 		LONG refCount = InterlockedDecrement(&refs);
 		if (refCount == 0)
 		{
-			// Drop the heap-resolution registration BEFORE the real release: the
-			// runtime reuses freed heap allocations, and a stale registry entry
-			// then aliases the live heap and hijacks every bind resolution.
 			GDKScarlett::D3D12X::UnregisterCbvHeap(real);
 			real->Release();
 			delete this;
@@ -93,8 +90,6 @@ struct XboxDescriptorHeap final : IXboxDescriptorHeap
 
 	HRESULT STDMETHODCALLTYPE GetDevice(REFIID riid, void** ppv) override
 	{
-		// Hand back the device we were created from, so the game keeps seeing the
-		// Xbox-shaped device rather than the raw desktop one.
 		if (device && ppv)
 		{
 			return device->QueryInterface(riid, ppv);
@@ -102,13 +97,8 @@ struct XboxDescriptorHeap final : IXboxDescriptorHeap
 		return real->GetDevice(riid, ppv);
 	}
 
-	// Xbox passes the return buffer in the this slot and the object second; MSVC does the reverse.
 	D3D12_DESCRIPTOR_HEAP_DESC* STDMETHODCALLTYPE GetDesc(IXboxDescriptorHeap* heap) override
 	{
-		static volatile LONG probed = 0;
-		if (InterlockedExchange(&probed, 1) == 0)
-			LOGF("heap GetDesc: this=%p param=%p vtable=%p thisIsWrapper=%d", (void*)this,
-			     (void*)heap, GHeapVtable, *(const void**)this == GHeapVtable);
 		D3D12_DESCRIPTOR_HEAP_DESC* out = (D3D12_DESCRIPTOR_HEAP_DESC*)this;
 		*out = static_cast<XboxDescriptorHeap*>(heap)->real->GetDesc();
 		return out;
@@ -132,17 +122,13 @@ ID3D12DescriptorHeap* XboxDescriptorHeapWrap(ID3D12DescriptorHeap* real, ID3D12D
 		return nullptr;
 	}
 	XboxDescriptorHeap* heap = new XboxDescriptorHeap();
-	heap->real = real;          // takes ownership of the caller's reference
+	heap->real = real;
 	heap->device = device;
 	heap->refs = 1;
 	GHeapVtable = *(const void**)static_cast<IXboxDescriptorHeap*>(heap);
-	LOGF("XboxDescriptorHeapWrap: real %p -> wrapper %p", real, heap);
 	return (ID3D12DescriptorHeap*)static_cast<IXboxDescriptorHeap*>(heap);
 }
 
-// The game hands wrapper pointers straight back to us. The real runtime must never
-// see a wrapper, so recognise our own objects by vtable identity and yield the
-// real one.
 ID3D12DescriptorHeap* XboxDescriptorHeapUnwrap(ID3D12DescriptorHeap* heap)
 {
 	if (!heap)

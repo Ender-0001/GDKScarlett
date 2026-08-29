@@ -14,8 +14,10 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <algorithm>
 #include <map>
 #include <set>
+#include <vector>
 #include <string>
 
 namespace GDKScarlett::D3D12X
@@ -77,6 +79,312 @@ namespace GDKScarlett::D3D12X
 		case 6: return "CS";
 		default: return "??";
 		}
+	}
+
+	static volatile LONG64 GLocateTicks = 0, GCacheIoTicks = 0, GCompileTicks = 0;
+	static volatile LONG64 GTranslateTicks = 0, GAliasIoTicks = 0, GLinkFixTicks = 0;
+	static volatile LONG64 GMaxLocateTicks = 0, GMaxCompileTicks = 0, GMaxTranslateTicks = 0;
+	static volatile LONG GLocateCalls = 0, GLocateMemoHits = 0, GCacheIoCalls = 0, GCompileCalls = 0;
+	static volatile LONG GTranslateCalls = 0, GAliasIoCalls = 0, GLinkFixCalls = 0;
+	static volatile LONG GAliasHits = 0;
+
+	static inline LONG64 Ticks()
+	{
+		LARGE_INTEGER t;
+		QueryPerformanceCounter(&t);
+		return t.QuadPart;
+	}
+
+	static void NoteMax(volatile LONG64* slot, LONG64 value)
+	{
+		for (;;)
+		{
+			LONG64 seen = *slot;
+			if (value <= seen || InterlockedCompareExchange64(slot, value, seen) == seen)
+			{
+				break;
+			}
+		}
+	}
+
+	void GetRecompilerTimings(RecompilerTimings* out)
+	{
+		if (!out)
+		{
+			return;
+		}
+		LARGE_INTEGER freq;
+		QueryPerformanceFrequency(&freq);
+		double toMs = freq.QuadPart ? 1000.0 / (double)freq.QuadPart : 0.0;
+		out->locateMs = GLocateTicks * toMs;
+		out->cacheIoMs = GCacheIoTicks * toMs;
+		out->compileMs = GCompileTicks * toMs;
+		out->locateCalls = GLocateCalls;
+		out->locateMemoHits = GLocateMemoHits;
+		out->cacheIoCalls = GCacheIoCalls;
+		out->compileCalls = GCompileCalls;
+		out->aliasHits = GAliasHits;
+		out->scanAttempts = GScanAttempts;
+		out->scanInstructions = GScanInstructions;
+		out->translateMs = GTranslateTicks * toMs;
+		out->aliasIoMs = GAliasIoTicks * toMs;
+		out->linkFixMs = GLinkFixTicks * toMs;
+		out->maxLocateMs = GMaxLocateTicks * toMs;
+		out->maxCompileMs = GMaxCompileTicks * toMs;
+		out->maxTranslateMs = GMaxTranslateTicks * toMs;
+		out->translateCalls = GTranslateCalls;
+		out->aliasIoCalls = GAliasIoCalls;
+		out->linkFixCalls = GLinkFixCalls;
+	}
+
+	static volatile LONG GStageHit[8] = {}, GStageLive[8] = {}, GStagePlaceholder[8] = {},
+	                     GStageUndecodable[8] = {};
+	static volatile LONG GTranslateFail = 0, GFxcFail = 0;
+
+	static std::map<std::string, LONG> GBlockingOpcodes;
+	static std::map<std::string, LONG> GSeenOpcodes;
+	static std::set<std::string> GCountedKeys;
+	static SRWLOCK GOpcodeLock = SRWLOCK_INIT;
+
+	static bool BenignOpcode(const std::string& opcode)
+	{
+		return opcode.rfind("s_load_dword", 0) == 0 || opcode == "s_nop";
+	}
+
+	static void NoteUnhandled(const std::string& key, const std::vector<std::string>& unhandled,
+	                          bool blocked)
+	{
+		AcquireSRWLockExclusive(&GOpcodeLock);
+		if (GCountedKeys.insert(key).second)
+		{
+			std::set<std::string> distinct;
+			for (const std::string& opcode : unhandled)
+			{
+				if (!BenignOpcode(opcode))
+				{
+					distinct.insert(opcode);
+				}
+			}
+			for (const std::string& opcode : distinct)
+			{
+				GSeenOpcodes[opcode] += 1;
+				if (blocked)
+				{
+					GBlockingOpcodes[opcode] += 1;
+				}
+			}
+		}
+		ReleaseSRWLockExclusive(&GOpcodeLock);
+	}
+
+	static void AppendTop(std::string& line, const std::map<std::string, LONG>& counts, size_t limit)
+	{
+		std::vector<std::pair<LONG, std::string>> sorted;
+		sorted.reserve(counts.size());
+		for (const auto& entry : counts)
+		{
+			sorted.push_back({ entry.second, entry.first });
+		}
+		std::sort(sorted.begin(), sorted.end(),
+		          [](const std::pair<LONG, std::string>& a, const std::pair<LONG, std::string>& b)
+		          {
+			          return a.first != b.first ? a.first > b.first : a.second < b.second;
+		          });
+		if (sorted.empty())
+		{
+			line += " (none)";
+			return;
+		}
+		for (size_t i = 0; i < sorted.size() && i < limit; ++i)
+		{
+			line += " " + sorted[i].second + "=" + std::to_string(sorted[i].first);
+		}
+		if (sorted.size() > limit)
+		{
+			line += " (+" + std::to_string(sorted.size() - limit) + " more)";
+		}
+	}
+
+	void LogRecompilerStats()
+	{
+		std::string stages;
+		for (UINT s = 1; s <= 6; ++s)
+		{
+			if (!GStageHit[s] && !GStageLive[s] && !GStagePlaceholder[s] && !GStageUndecodable[s])
+			{
+				continue;
+			}
+			char part[128];
+			wsprintfA(part, "%s%s hit=%ld live=%ld ph=%ld nodec=%ld", stages.empty() ? "" : " | ",
+			          StageName(s), GStageHit[s], GStageLive[s], GStagePlaceholder[s],
+			          GStageUndecodable[s]);
+			stages += part;
+		}
+		LOGF("recompiler-stats: %s", stages.empty() ? "(no shaders seen)" : stages.c_str());
+
+		AcquireSRWLockShared(&GOpcodeLock);
+		std::map<std::string, LONG> blocking = GBlockingOpcodes;
+		std::map<std::string, LONG> seen = GSeenOpcodes;
+		size_t blockedShaders = GCountedKeys.size();
+		ReleaseSRWLockShared(&GOpcodeLock);
+
+		std::string line = "recompiler-stats: translateFail=" + std::to_string(GTranslateFail) +
+		                   " fxcFail=" + std::to_string(GFxcFail) +
+		                   " shadersWithUnhandled=" + std::to_string(blockedShaders) +
+		                   " | BLOCKING:";
+		AppendTop(line, blocking, 12);
+		LOGF("%s", line.c_str());
+
+		std::string line2 = "recompiler-stats: all unhandled (incl. non-blocking):";
+		AppendTop(line2, seen, 12);
+		LOGF("%s", line2.c_str());
+	}
+
+	static void WriteCacheFile(const std::string& path, const void* data, size_t size)
+	{
+		HANDLE file = CreateFileA(path.c_str(), GENERIC_WRITE, 0, nullptr,
+		                          CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+		if (file != INVALID_HANDLE_VALUE)
+		{
+			DWORD written = 0;
+			WriteFile(file, data, (DWORD)size, &written, nullptr);
+			CloseHandle(file);
+		}
+	}
+
+	static std::map<std::string, std::string> GAlias;
+	static SRWLOCK GAliasLock = SRWLOCK_INIT;
+
+	static std::string AliasFileName(const std::string& blobKey)
+	{
+		return blobKey + ".v" + std::to_string(CacheVersion) + ".alias";
+	}
+
+	static bool LookupAlias(const std::string& blobKey, std::string& microKey)
+	{
+		AcquireSRWLockShared(&GAliasLock);
+		auto found = GAlias.find(blobKey);
+		bool known = (found != GAlias.end());
+		if (known)
+		{
+			microKey = found->second;
+		}
+		ReleaseSRWLockShared(&GAliasLock);
+		if (known)
+		{
+			return !microKey.empty();
+		}
+
+		std::string value;
+		std::string path = CacheDir() + "\\" + AliasFileName(blobKey);
+		LONG64 ta = Ticks();
+		HANDLE file = CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
+		                          OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+		if (file != INVALID_HANDLE_VALUE)
+		{
+			char buffer[17] = {};
+			DWORD read = 0;
+			if (ReadFile(file, buffer, 16, &read, nullptr) && read == 16)
+			{
+				value.assign(buffer, 16);
+			}
+			CloseHandle(file);
+		}
+		InterlockedAdd64(&GAliasIoTicks, Ticks() - ta);
+		InterlockedIncrement(&GAliasIoCalls);
+
+		AcquireSRWLockExclusive(&GAliasLock);
+		GAlias.emplace(blobKey, value);
+		ReleaseSRWLockExclusive(&GAliasLock);
+		microKey = value;
+		return !value.empty();
+	}
+
+	static void StoreAlias(const std::string& blobKey, const std::string& microKey)
+	{
+		if (microKey.size() != 16)
+		{
+			return;
+		}
+		bool isNew = false;
+		AcquireSRWLockExclusive(&GAliasLock);
+		auto found = GAlias.find(blobKey);
+		if (found == GAlias.end() || found->second.empty())
+		{
+			GAlias[blobKey] = microKey;
+			isNew = true;
+		}
+		ReleaseSRWLockExclusive(&GAliasLock);
+		if (isNew)
+		{
+			WriteCacheFile(CacheDir() + "\\" + AliasFileName(blobKey), microKey.data(), 16);
+		}
+	}
+
+	struct LocatedRec
+	{
+		bool ok;
+		const uint8_t* prog;
+		size_t progBytes;
+		std::string key;
+		size_t instrCount;
+		size_t namedCount;
+	};
+
+	static std::map<std::pair<const void*, SIZE_T>, LocatedRec> GLocated;
+	static SRWLOCK GLocatedLock = SRWLOCK_INIT;
+
+	static bool LocateCached(const void* blob, SIZE_T length, LocatedRec& out)
+	{
+		if (!blob || !length)
+		{
+			return false;
+		}
+		auto id = std::make_pair(blob, length);
+		AcquireSRWLockShared(&GLocatedLock);
+		auto found = GLocated.find(id);
+		bool known = (found != GLocated.end());
+		if (known)
+		{
+			out = found->second;
+		}
+		ReleaseSRWLockShared(&GLocatedLock);
+		if (known)
+		{
+			InterlockedIncrement(&GLocateMemoHits);
+			return out.ok;
+		}
+
+		LocatedRec rec{};
+		const uint8_t* prog = nullptr;
+		size_t progBytes = 0;
+		Program program;
+		std::string error;
+		LONG64 t0 = Ticks();
+		rec.ok = LocateMicrocode(static_cast<const uint8_t*>(blob), length, prog, progBytes,
+		                         program, error);
+		LONG64 locateDelta = Ticks() - t0;
+		InterlockedAdd64(&GLocateTicks, locateDelta);
+		NoteMax(&GMaxLocateTicks, locateDelta);
+		InterlockedIncrement(&GLocateCalls);
+		if (rec.ok)
+		{
+			rec.prog = prog;
+			rec.progBytes = progBytes;
+			rec.key = HexKey(Fnv1a(prog, progBytes));
+			rec.instrCount = program.instructions.size();
+			rec.namedCount = program.instructions.size() - program.unknownCount;
+		}
+		else
+		{
+			rec.key = error;
+		}
+
+		AcquireSRWLockExclusive(&GLocatedLock);
+		auto inserted = GLocated.emplace(id, rec);
+		out = inserted.first->second;
+		ReleaseSRWLockExclusive(&GLocatedLock);
+		return out.ok;
 	}
 
 	static pD3DCompile LoadD3DCompile()
@@ -193,16 +501,15 @@ namespace GDKScarlett::D3D12X
 		ReleaseSRWLockExclusive(&GLoadedLock);
 	}
 
-	static bool TryLoadCached(const uint8_t* prog, size_t progBytes, D3D12_SHADER_BYTECODE* out)
+	static bool TryLoadCached(const std::string& key, D3D12_SHADER_BYTECODE* out)
 	{
-		std::string key = HexKey(Fnv1a(prog, progBytes));
-
-		AcquireSRWLockExclusive(&GLoadedLock);
+		AcquireSRWLockShared(&GLoadedLock);
 		auto found = GLoadedBlobs.find(key);
-		if (found != GLoadedBlobs.end())
+		bool known = (found != GLoadedBlobs.end());
+		D3D12_SHADER_BYTECODE bytecode = known ? found->second : D3D12_SHADER_BYTECODE{};
+		ReleaseSRWLockShared(&GLoadedLock);
+		if (known)
 		{
-			D3D12_SHADER_BYTECODE bytecode = found->second;
-			ReleaseSRWLockExclusive(&GLoadedLock);
 			if (!bytecode.pShaderBytecode)
 			{
 				return false;
@@ -211,8 +518,9 @@ namespace GDKScarlett::D3D12X
 			return true;
 		}
 
-		D3D12_SHADER_BYTECODE bytecode = {};
+		bytecode = D3D12_SHADER_BYTECODE{};
 		std::string path = CacheDir() + "\\" + CacheFileName(key);
+		LONG64 t0 = Ticks();
 		HANDLE file = CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
 		                          OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 		bool opened = (file != INVALID_HANDLE_VALUE);
@@ -235,8 +543,22 @@ namespace GDKScarlett::D3D12X
 			}
 			CloseHandle(file);
 		}
-		GLoadedBlobs[key] = bytecode;
+		InterlockedAdd64(&GCacheIoTicks, Ticks() - t0);
+		InterlockedIncrement(&GCacheIoCalls);
+
+		AcquireSRWLockExclusive(&GLoadedLock);
+		auto inserted = GLoadedBlobs.emplace(key, bytecode);
+		bool weLost = !inserted.second;
+		D3D12_SHADER_BYTECODE winner = inserted.first->second;
 		ReleaseSRWLockExclusive(&GLoadedLock);
+		if (weLost)
+		{
+			if (bytecode.pShaderBytecode && bytecode.pShaderBytecode != winner.pShaderBytecode)
+			{
+				free(const_cast<void*>(bytecode.pShaderBytecode));
+			}
+			bytecode = winner;
+		}
 
 		static LONG loggedLookups = 0;
 		if (InterlockedIncrement(&loggedLookups) <= 64)
@@ -269,18 +591,6 @@ namespace GDKScarlett::D3D12X
 		return true;
 	}
 
-	static void WriteCacheFile(const std::string& path, const void* data, size_t size)
-	{
-		HANDLE file = CreateFileA(path.c_str(), GENERIC_WRITE, 0, nullptr,
-		                          CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-		if (file != INVALID_HANDLE_VALUE)
-		{
-			DWORD written = 0;
-			WriteFile(file, data, (DWORD)size, &written, nullptr);
-			CloseHandle(file);
-		}
-	}
-
 	static bool LiveCompileShader(const uint8_t* blob, size_t length, UINT stageType, const std::string& key)
 	{
 		static std::set<std::string> failedKeys;
@@ -303,12 +613,27 @@ namespace GDKScarlett::D3D12X
 		TranslateOptions options;
 		TranslateOutput translated;
 		std::string error;
+		LONG64 tt = Ticks();
 		bool ok = TranslateContainer(blob, length,
 		                             stageType == 1 ? 1 : stageType == 6 ? 6 : 2,
 		                             options, translated, error);
+		LONG64 translateDelta = Ticks() - tt;
+		InterlockedAdd64(&GTranslateTicks, translateDelta);
+		InterlockedIncrement(&GTranslateCalls);
+		NoteMax(&GMaxTranslateTicks, translateDelta);
+		bool translateBlocked = false;
 		if (ok && !translated.ok && !TranslationIsClean(translated, error))
 		{
 			ok = false;
+			translateBlocked = true;
+		}
+		if (!translated.unhandled.empty())
+		{
+			NoteUnhandled(key, translated.unhandled, translateBlocked);
+		}
+		if (!ok)
+		{
+			InterlockedIncrement(&GTranslateFail);
 		}
 
 		ID3DBlob* code = nullptr;
@@ -316,12 +641,21 @@ namespace GDKScarlett::D3D12X
 		HRESULT hr = E_FAIL;
 		if (ok)
 		{
+			LONG64 tc = Ticks();
 			hr = compile(translated.hlsl.data(), translated.hlsl.size(), key.c_str(), nullptr, nullptr,
 			             "main", translated.target.c_str(), D3DCOMPILE_OPTIMIZATION_LEVEL3, 0,
 			             &code, &errors);
+			LONG64 compileDelta = Ticks() - tc;
+			InterlockedAdd64(&GCompileTicks, compileDelta);
+			NoteMax(&GMaxCompileTicks, compileDelta);
+			InterlockedIncrement(&GCompileCalls);
 		}
 		if (!ok || FAILED(hr) || !code)
 		{
+			if (ok)
+			{
+				InterlockedIncrement(&GFxcFail);
+			}
 			static LONG loggedFailures = 0;
 			if (InterlockedIncrement(&loggedFailures) <= 16)
 			{
@@ -398,12 +732,17 @@ namespace GDKScarlett::D3D12X
 			return substitutable;
 		}
 
-		const uint8_t* prog = nullptr;
-		size_t progBytes = 0;
-		Program program;
-		std::string error;
-		substitutable = LocateMicrocode(static_cast<const uint8_t*>(input->pShaderBytecode),
-		                                input->BytecodeLength, prog, progBytes, program, error);
+		std::string microKey;
+		if (LookupAlias(HexKey(Fnv1a(input->pShaderBytecode, input->BytecodeLength)), microKey))
+		{
+			InterlockedIncrement(&GAliasHits);
+			substitutable = true;
+		}
+		else
+		{
+			LocatedRec located{};
+			substitutable = LocateCached(input->pShaderBytecode, input->BytecodeLength, located);
+		}
 
 		AcquireSRWLockExclusive(&memoLock);
 		memo[id] = substitutable;
@@ -451,6 +790,16 @@ namespace GDKScarlett::D3D12X
 	bool TryLinkFixVs(const D3D12_SHADER_BYTECODE* vs, const D3D12_SHADER_BYTECODE* ps,
 	                  const D3D12_INPUT_LAYOUT_DESC* inputLayout, D3D12_SHADER_BYTECODE* out)
 	{
+		struct LinkFixTimer
+		{
+			LONG64 start;
+			LinkFixTimer() : start(Ticks()) {}
+			~LinkFixTimer()
+			{
+				InterlockedAdd64(&GLinkFixTicks, Ticks() - start);
+				InterlockedIncrement(&GLinkFixCalls);
+			}
+		} linkFixTimer;
 		static LONG loggedBails = 0;
 		auto bail = [&](const char* reason) -> bool
 		{
@@ -475,24 +824,17 @@ namespace GDKScarlett::D3D12X
 			return bail("no d3dcompiler");
 		}
 
-		const uint8_t* vsProg = nullptr;
-		size_t vsLength = 0;
-		const uint8_t* psProg = nullptr;
-		size_t psLength = 0;
-		Program program;
-		std::string error;
-		if (!LocateMicrocode((const uint8_t*)vs->pShaderBytecode, vs->BytecodeLength,
-		                     vsProg, vsLength, program, error))
+		LocatedRec vsLoc{}, psLoc{};
+		if (!LocateCached(vs->pShaderBytecode, vs->BytecodeLength, vsLoc))
 		{
 			return bail("VS microcode not located");
 		}
-		std::string vsKey = HexKey(Fnv1a(vsProg, vsLength));
-		if (!LocateMicrocode((const uint8_t*)ps->pShaderBytecode, ps->BytecodeLength,
-		                     psProg, psLength, program, error))
+		const std::string& vsKey = vsLoc.key;
+		if (!LocateCached(ps->pShaderBytecode, ps->BytecodeLength, psLoc))
 		{
 			return bail("PS microcode not located");
 		}
-		std::string psKey = HexKey(Fnv1a(psProg, psLength));
+		const std::string& psKey = psLoc.key;
 
 		std::string layoutTag = "n";
 		if (inputLayout && inputLayout->NumElements && inputLayout->pInputElementDescs)
@@ -577,13 +919,19 @@ namespace GDKScarlett::D3D12X
 			}
 		}
 
+		std::string error;
 		TranslateOptions options;
 		options.vsLinkOutputs = &rows;
 		options.vsInOverride = layoutInputs.empty() ? nullptr : &layoutInputs;
 		options.vsNoInputs = noInputs;
 		TranslateOutput translated;
+		LONG64 tt = Ticks();
 		bool ok = TranslateContainer((const uint8_t*)vs->pShaderBytecode, vs->BytecodeLength,
 		                             1, options, translated, error);
+		LONG64 translateDelta = Ticks() - tt;
+		InterlockedAdd64(&GTranslateTicks, translateDelta);
+		InterlockedIncrement(&GTranslateCalls);
+		NoteMax(&GMaxTranslateTicks, translateDelta);
 		if (ok && !translated.ok && !TranslationIsClean(translated, error))
 		{
 			ok = false;
@@ -594,8 +942,13 @@ namespace GDKScarlett::D3D12X
 		HRESULT hr = E_FAIL;
 		if (ok)
 		{
+			LONG64 tc = Ticks();
 			hr = compile(translated.hlsl.data(), translated.hlsl.size(), pairKey.c_str(), nullptr, nullptr,
 			             "main", "vs_5_1", D3DCOMPILE_OPTIMIZATION_LEVEL3, 0, &code, &errors);
+			LONG64 compileDelta = Ticks() - tc;
+			InterlockedAdd64(&GCompileTicks, compileDelta);
+			NoteMax(&GMaxCompileTicks, compileDelta);
+			InterlockedIncrement(&GCompileCalls);
 		}
 		if (!ok || FAILED(hr) || !code)
 		{
@@ -693,35 +1046,55 @@ namespace GDKScarlett::D3D12X
 			return false;
 		}
 
-		const uint8_t* prog = nullptr;
-		size_t progBytes = 0;
-		Program program;
-		std::string error;
-		bool located = LocateMicrocode(static_cast<const uint8_t*>(input->pShaderBytecode),
-		                               input->BytecodeLength, prog, progBytes, program, error);
-		if (!located)
+		std::string blobKey = HexKey(Fnv1a(input->pShaderBytecode, input->BytecodeLength));
+		std::string key;
+		bool ok = LookupAlias(blobKey, key);
+		if (ok)
 		{
-			static LONG loggedUndecodable = 0;
-			if (InterlockedIncrement(&loggedUndecodable) <= 8)
-			{
-				LOGF("recompiler[%s]: no decodable GCN stream (%s)", StageName(stageType), error.c_str());
-			}
+			InterlockedIncrement(&GAliasHits);
 		}
 		else
 		{
-			std::string key = HexKey(Fnv1a(prog, progBytes));
-			static LONG loggedLocated = 0;
-			if (InterlockedIncrement(&loggedLocated) <= 64)
+			LocatedRec located{};
+			ok = LocateCached(input->pShaderBytecode, input->BytecodeLength, located);
+			if (ok)
 			{
-				LOGF("recompiler[%s hasRT=%d]: GCN microcode %zu bytes (%zu instrs, %u named) key=%s",
-				     StageName(stageType), hasRenderTarget ? 1 : 0, progBytes, program.instructions.size(),
-				     (unsigned)(program.instructions.size() - program.unknownCount), key.c_str());
+				key = located.key;
+				StoreAlias(blobKey, key);
+				static LONG loggedLocated = 0;
+				if (InterlockedIncrement(&loggedLocated) <= 64)
+				{
+					LOGF("recompiler[%s hasRT=%d]: GCN microcode %zu bytes (%zu instrs, %u named) "
+					     "key=%s blob=%s",
+					     StageName(stageType), hasRenderTarget ? 1 : 0, located.progBytes,
+					     located.instrCount, (unsigned)located.namedCount, key.c_str(),
+					     blobKey.c_str());
+				}
 			}
-
+			else
+			{
+				if (stageType < 8)
+				{
+					InterlockedIncrement(&GStageUndecodable[stageType]);
+				}
+				static LONG loggedUndecodable = 0;
+				if (InterlockedIncrement(&loggedUndecodable) <= 8)
+				{
+					LOGF("recompiler[%s]: no decodable GCN stream (%s)", StageName(stageType),
+					     located.key.c_str());
+				}
+			}
+		}
+		if (ok)
+		{
 			if (allowCache && IsSubstitutableStage(stageType, hasRenderTarget))
 			{
-				if (TryLoadCached(prog, progBytes, output))
+				if (TryLoadCached(key, output))
 				{
+					if (stageType < 8)
+					{
+						InterlockedIncrement(&GStageHit[stageType]);
+					}
 					NotePsoKey(StageName(stageType), key);
 					static LONG loggedSubstitutions = 0;
 					if (InterlockedIncrement(&loggedSubstitutions) <= 8)
@@ -733,8 +1106,12 @@ namespace GDKScarlett::D3D12X
 				}
 				if (LiveCompileShader(static_cast<const uint8_t*>(input->pShaderBytecode),
 				                      input->BytecodeLength, stageType, key) &&
-				    TryLoadCached(prog, progBytes, output))
+				    TryLoadCached(key, output))
 				{
+					if (stageType < 8)
+					{
+						InterlockedIncrement(&GStageLive[stageType]);
+					}
 					NotePsoKey(StageName(stageType), key);
 					static LONG liveCompiled = 0;
 					LONG count = InterlockedIncrement(&liveCompiled);
@@ -750,6 +1127,10 @@ namespace GDKScarlett::D3D12X
 
 		if (StagePlaceholder(stageType, hasRenderTarget, output))
 		{
+			if (stageType < 8)
+			{
+				InterlockedIncrement(&GStagePlaceholder[stageType]);
+			}
 			static LONG loggedPlaceholders = 0;
 			if (InterlockedIncrement(&loggedPlaceholders) <= 8)
 			{

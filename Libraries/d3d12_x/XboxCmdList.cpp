@@ -169,7 +169,6 @@ struct IXboxCommandList
 	virtual void STDMETHODCALLTYPE Write32BitValueTopOfPipeX(void*, void*, void*, void*, void*, void*) = 0;
 	virtual void STDMETHODCALLTYPE Write64BitValueTopOfPipeX(void*, void*, void*, void*, void*, void*) = 0;
 	virtual void STDMETHODCALLTYPE Write32BitValueBottomOfShaderX(void*, void*, void*, void*, void*, void*) = 0;
-	// Returns UINT64 in RAX; declared scalar so the ABI matches.
 	virtual UINT64 STDMETHODCALLTYPE GetExecutionCommandSizeX(void*, void*, void*, void*, void*, void*) = 0;
 	virtual HRESULT STDMETHODCALLTYPE CloseBundleX(void*, void*, void*, void*, void*, void*) = 0;
 	virtual void STDMETHODCALLTYPE KickoffX(void*, void*, void*, void*, void*, void*) = 0;
@@ -249,8 +248,6 @@ public:
 		return mReal->SetName(name);
 	}
 
-	// Hand back the device we were created from, so the game keeps seeing the
-	// Xbox-shaped device rather than the raw desktop one.
 	HRESULT STDMETHODCALLTYPE GetDevice(REFIID riid, void** ppv) override
 	{
 		if (mDevice && ppv)
@@ -379,10 +376,6 @@ public:
 		mReal->SetPipelineState(pipelineState);
 	}
 
-	// Aliasing barriers are dropped: on Xbox these resources live in an
-	// aliasable pool, but we back them with committed resources, for which an
-	// aliasing barrier is invalid and makes Close() fail with E_INVALIDARG.
-	// Committed memory is never aliased, so removing them is safe.
 	void STDMETHODCALLTYPE ResourceBarrier(UINT numBarriers,
 	                                       const D3D12_RESOURCE_BARRIER* barriers) override
 	{
@@ -470,9 +463,6 @@ public:
 		mReal->SetPredication(buffer, alignedBufferOffset, operation);
 	}
 
-	// The game passes back the wrappers we handed it from CreateDescriptorHeap;
-	// D3D12Core must receive the real heaps or it dereferences our object as one
-	// of its own.
 	void STDMETHODCALLTYPE SetDescriptorHeaps(UINT numDescriptorHeaps,
 	                                          ID3D12DescriptorHeap* const* descriptorHeaps) override
 	{
@@ -496,9 +486,6 @@ public:
 		{
 			heaps[i] = XboxDescriptorHeapUnwrap(descriptorHeaps[i]);
 		}
-		// GPU descriptor handles are heap-relative and both shader-visible heaps
-		// report the same GPU base, so a root-table bind can only be resolved
-		// through the heap currently bound on this thread.
 		UINT cbvHeaps = 0;
 		for (UINT i = 0; i < numDescriptorHeaps; ++i)
 		{
@@ -727,9 +714,6 @@ public:
 	void STDMETHODCALLTYPE DrawIndexedX(void*, void*, void*, void*, void*, void*) override {}
 	void STDMETHODCALLTYPE NopX(void*, void*, void*, void*, void*, void*) override {}
 
-	// Identical to the desktop calls plus a trailing D3D12XBOX_COPY_FLAGS. These
-	// were no-op stubs once, which silently dropped every texture upload routed
-	// through them.
 	void STDMETHODCALLTYPE CopyTextureRegionX(const D3D12_TEXTURE_COPY_LOCATION* dst,
 	                                          UINT dstX, UINT dstY, UINT dstZ,
 	                                          const D3D12_TEXTURE_COPY_LOCATION* src,
@@ -782,8 +766,6 @@ public:
 	}
 
 private:
-	// Copy the live constants into the 256-aligned shadow CBV before the table is
-	// bound, and upload any placed-X texel data the table's SRVs point at.
 	static void BindDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE baseDescriptor, UINT rootParameterIndex,
 	                                bool isCompute)
 	{
@@ -799,14 +781,14 @@ private:
 	}
 
 public:
-	ID3D12GraphicsCommandList* mReal = nullptr;   // 0x08
-	ID3D12Device* mDevice = nullptr;              // 0x10
-	volatile LONG mRefs = 1;                      // 0x18
+	ID3D12GraphicsCommandList* mReal = nullptr;
+	ID3D12Device* mDevice = nullptr;
+	volatile LONG mRefs = 1;
 	UINT32 mPad1c = 0;
 	void* mReserved20[3] = {};
-	void* mPutterCurrent = nullptr;               // 0x38
+	void* mPutterCurrent = nullptr;
 	void* mReserved40[2] = {};
-	void* mPutterLimit = nullptr;                 // 0x50
+	void* mPutterLimit = nullptr;
 	void* mReserved58[8] = {};
 };
 
@@ -826,7 +808,6 @@ ID3D12GraphicsCommandList* XboxCommandListWrap(ID3D12GraphicsCommandList* real, 
 	{
 		GListVtable = *(const void**)wrapper;
 	}
-	LOGF("XboxCommandListWrap: real %p -> wrapper %p", real, wrapper);
 	return (ID3D12GraphicsCommandList*)wrapper;
 }
 

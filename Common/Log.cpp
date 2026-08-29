@@ -8,8 +8,6 @@ namespace GDKScarlett::Log
 	static void DefaultSink(const char* line)
 	{
 		OutputDebugStringA(line);
-		fputs(line, stdout);
-		fflush(stdout);
 	}
 
 	static void (*GSink)(const char*) = DefaultSink;

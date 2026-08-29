@@ -1436,6 +1436,9 @@ namespace GDKScarlett::D3D12X
 		return false;
 	}
 
+	volatile LONG GScanAttempts = 0;
+	volatile LONG64 GScanInstructions = 0;
+
 	bool LocateProgram(const uint32_t* words, size_t wordCount,
 	                   size_t& startWord, Program& out, std::string& error)
 	{
@@ -1456,13 +1459,31 @@ namespace GDKScarlett::D3D12X
 		bool found = false;
 		size_t bestStart = 0;
 		size_t bestInstructions = 0;
+		Program program;
+		std::string decodeError;
+		std::vector<bool> covered(wordCount, false);
 		for (size_t start = 0; start < wordCount; ++start)
 		{
-			Program program;
-			std::string decodeError;
+			if (covered[start])
+			{
+				continue;
+			}
+			program.instructions.clear();
+			program.terminated = false;
+			program.unknownCount = 0;
+			InterlockedIncrement(&GScanAttempts);
 			if (!DecodeProgram(words + start, wordCount - start, program, decodeError, 0))
 			{
 				continue;
+			}
+			InterlockedAdd64(&GScanInstructions, (LONG64)program.instructions.size());
+			for (const Instruction& instruction : program.instructions)
+			{
+				size_t boundary = start + instruction.pc / 4;
+				if (boundary > start && boundary < wordCount)
+				{
+					covered[boundary] = true;
+				}
 			}
 			if (!program.terminated || program.instructions.size() < 8)
 			{
@@ -1481,7 +1502,6 @@ namespace GDKScarlett::D3D12X
 		}
 
 		startWord = bestStart;
-		std::string decodeError;
 		DecodeProgram(words + bestStart, wordCount - bestStart, out, decodeError, 0);
 		error.clear();
 		return true;
