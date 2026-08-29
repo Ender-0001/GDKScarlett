@@ -38,7 +38,7 @@ The layer doesn't care which console a game was built for.
 
 ---
 
-## Why most of it already works
+## Architecture
 
 A GDK title is an ordinary Windows PE. The Windows loader maps it and resolves its imports the
 same way it would for any desktop application, and **the large majority of those imports
