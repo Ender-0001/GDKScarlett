@@ -7,6 +7,7 @@
   </Folder>
   <Folder Name="/Libraries/">
     <Project Path="Libraries/d3d12_x/d3d12_x.vcxproj" Id="b5275926-9e54-4b94-a136-1d486e7ca29c" />
+    <Project Path="Libraries/d3d12_xs/d3d12_xs.vcxproj" Id="a1a964a2-4cf9-4f1f-9708-c9a73112cfe8" />
     <Project Path="Libraries/xmem/xmem.vcxproj" Id="c16f3acf-154e-414c-b728-e51f0f77fd49" />
     <Project Path="Libraries/PIXEvt/PIXEvt.vcxproj" Id="d0e15d1e-aa3b-4d57-99e3-bcb8b7effe76" />
     <Project Path="Libraries/AcpHal/AcpHal.vcxproj" Id="ea960d8b-353e-4c18-8958-aac0faeefb72" />
